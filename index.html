@@ -2,39 +2,204 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Do You Love Mukesh?</title>
-                <style>
-                        body {
-                                    text-align: center;
-                                                font-family: Arial, sans-serif;
-                                                            margin-top: 50px;
-                                                                    }
-                                                                            .container {
-                                                                                        position: relative;
-                                                                                                    display: inline-block;
-                                                                                                            }
-                                                                                                                    button {
-                                                                                                                                padding: 10px 20px;
-                                                                                                                                            font-size: 16px;
-                                                                                                                                                        margin: 10px;
-                                                                                                                                                                    cursor: pointer;
-                                                                                                                                                                            }
-                                                                                                                                                                                    #no {
-                                                                                                                                                                                                position: absolute;
-                                                                                                                                                                                                        }
-                                                                                                                                                                                                            </style>
-                                                                                                                                                                                                            </head>
-                                                                                                                                                                                                            <body>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAJK AI Assistant</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0d1b2a, #1b263b);
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-                                                                                                                                                                                                                <h1>Do you love mukesh?</h1>
-                                                                                                                                                                                                                    <div class="container">
-                                                                                                                                                                                                                            <button onclick="loveYou()">Yes</button>
-                                                                                                                                                                                                                                    <button id="no" onmouseover="moveNoButton()">No</button>
-                                                                                                                                                                                                                                        </div>
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
 
-                                                                                                                                                                                                                                            <script>
-                                                                                                                                                                                                                                                    function loveYou() {
+        .orb {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #00f7ff, #007bff);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: pulse 2s infinite;
+            cursor: pointer;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px #00f7ff, 0 0 20px #00f7ff; }
+            50% { box-shadow: 0 0 20px #00f7ff, 0 0 40px #00f7ff; }
+            100% { box-shadow: 0 0 10px #00f7ff, 0 0 20px #00f7ff; }
+        }
+
+        .chat-box {
+            height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #00f7ff;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .message {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .user-message {
+            background: #007bff;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .rajk-message {
+            background: #00f7ff;
+            color: #0d1b2a;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            outline: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #00f7ff;
+            color: #0d1b2a;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #007bff;
+        }
+
+        .mic-button.listening {
+            background: #ff4d4d;
+            animation: mic-pulse 1s infinite;
+        }
+
+        @keyframes mic-pulse {
+            0% { box-shadow: 0 0 5px #ff4d4d; }
+            50% { box-shadow: 0 0 15px #ff4d4d; }
+            100% { box-shadow: 0 0 5px #ff4d4d; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="orb" id="orb"></div>
+        <div class="chat-box" id="chatBox"></div>
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Ask RAJK anything...">
+            <button id="sendButton">Send</button>
+            <button id="micButton">🎤</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chatBox');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const micButton = document.getElementById('micButton');
+        let recognition = null;
+
+        // Initialize Web Speech API
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                micButton.classList.add('listening');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                userInput.value = transcript;
+                sendMessage(transcript);
+                recognition.stop();
+            };
+
+            recognition.onend = () => {
+                micButton.classList.remove('listening');
+            };
+        } else {
+            micButton.disabled = true;
+            micButton.title = "Voice input not supported in this browser";
+        }
+
+        // Send message function
+        function sendMessage(text) {
+            if (!text.trim()) return;
+
+            // Display user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user-message';
+            userMsg.textContent = text;
+            chatBox.appendChild(userMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Simulate RAJK response (replace with actual API call)
+            setTimeout(() => {
+                const rajkmsg = document.createElement('div');
+                rajkMsg.className = 'message rajk-message';
+                rajkMsg.textContent = `RAJK: I understood "${text}". How may I assist you further?`;
+                chatBox.appendChild(rajkMsg);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 500);
+
+            userInput.value = '';
+        }
+
+        // Event listeners
+        sendButton.addEventListener('click', () => sendMessage(userInput.value));
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage(userInput.value);
+        });
+
+        micButton.addEventListener('click', () => {
+            if (recognition) recognition.start();
+        });
+
+        // Orb click to trigger a welcome message
+        document.getElementById('orb').addEventListener('click', () => {
+            const welcomeMsg = document.createElement('div');
+            `welcomeMsg.className` = 'message rajk-message';
+            welcomeMsg.textContent = 'RAJK: Greetings! I am RAJK, your AI assistant. How can I help you today?';
+            chatBox.appendChild(welcomeMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    </script>
+</body>
+    </html>                                                                                                                                                                                                                                                    function loveYou() {
                                                                                                                                                                                                                                                                 alert("I love you too! ❤️");
                                                                                                                                                                                                                                                                         }
 
